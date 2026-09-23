@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FaceVision — Reconhecimento Facial em Tempo Real</title>
+  <meta name="description" content="Aplicativo de reconhecimento facial com detecção de expressões e filtros em tempo real usando IA no navegador." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-wrapper">
+
+    <header class="header">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="20" cy="20" r="18" stroke="url(#g1)" stroke-width="2"/>
+            <circle cx="14" cy="17" r="3" fill="url(#g2)"/>
+            <circle cx="26" cy="17" r="3" fill="url(#g2)"/>
+            <path d="M12 26 Q20 32 28 26" stroke="url(#g2)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+            <defs>
+              <linearGradient id="g1" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#a78bfa"/>
+                <stop offset="1" stop-color="#38bdf8"/>
+              </linearGradient>
+              <linearGradient id="g2" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#c084fc"/>
+                <stop offset="1" stop-color="#38bdf8"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <span class="logo-text">FaceVision<sup>AI</sup></span>
+      </div>
+      <div class="header-badges">
+        <span class="badge badge-live" id="live-badge">
+          <span class="pulse-dot"></span> AO VIVO
+        </span>
+        <span class="badge badge-model" id="model-badge">Carregando IA&hellip;</span>
+      </div>
+    </header>
+
+    <main class="main">
+
+      <section class="stage-section">
+        <div class="stage-card">
+          <div class="camera-container" id="camera-container">
+            <div class="loading-overlay" id="loading-overlay">
+              <div class="loader-ring"></div>
+              <p class="loader-text">Iniciando IA Neural&hellip;</p>
+              <p class="loader-sub">Carregando modelos de reconhecimento facial</p>
+            </div>
+
+            <div class="start-overlay" id="start-overlay" style="display:none;">
+              <div class="camera-icon">
+                <svg viewBox="0 0 64 64" fill="none">
+                  <rect x="4" y="16" width="40" height="32" rx="6" stroke="#a78bfa" stroke-width="2.5"/>
+                  <polygon points="44,24 60,16 60,48 44,40" fill="#a78bfa" opacity="0.8"/>
+                  <circle cx="24" cy="32" r="8" stroke="#38bdf8" stroke-width="2.5"/>
+                  <circle cx="24" cy="32" r="3" fill="#38bdf8" opacity="0.6"/>
+                </svg>
+              </div>
+              <h2>Pronto para iniciar!</h2>
+              <p>Clique no botão abaixo para ligar a câmera e começar o reconhecimento facial em tempo real</p>
+              <button class="btn-primary btn-large" id="start-btn">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M8 5v14l11-7z"/></svg>
+                Ligar Câmera
+              </button>
+            </div>
+
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="overlay-canvas"></canvas>
+            <canvas id="filter-canvas"></canvas>
+
+            <div class="corner tl"></div>
+            <div class="corner tr"></div>
+            <div class="corner bl"></div>
+            <div class="corner br"></div>
+
+            <div class="expression-hud" id="expression-hud" style="display:none;">
+              <div class="hud-face-count">
+                <span id="face-count-num">0</span>
+                <span class="hud-label">rosto(s)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="camera-controls">
+            <button class="btn-icon" id="mirror-btn" title="Espelhar camera" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 3v18M3 12l4-4M3 12l4 4M21 12l-4-4M21 12l-4 4"/>
+              </svg>
+            </button>
+            <button class="btn-primary" id="toggle-btn" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.07 4.93a10 10 0 0 0-14.14 0M4.93 19.07a10 10 0 0 0 14.14 0"/>
+              </svg>
+              Aguardando...
+            </button>
+            <button class="btn-icon" id="snapshot-btn" title="Tirar foto" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+
+        <div class="panel-card">
+          <h3 class="panel-title">
+            <span class="panel-title-icon">&#128522;</span>
+            Expressoes Faciais
+          </h3>
+          <div class="expressions-list" id="expressions-list">
+            <div class="expression-item" data-expr="happy">
+              <span class="expr-emoji">&#128516;</span>
+              <span class="expr-label">Feliz</span>
+              <div class="expr-bar-wrap"><div class="expr-bar" id="bar-happy"></div></div>
+              <span class="expr-pct" id="pct-happy">0%</span>
+            </div>
+            <div class="expression-item" data-expr="sad">
+              <span class="expr-emoji">&#128546;</span>
+              <span class="expr-label">Triste</span>
+              <div class="expr-bar-wrap"><div class="expr-bar" id="bar-sad"></div></div>
+              <span class="expr-pct" id="pct-sad">0%</span>
+            </div>
+            <div class="expression-item" data-expr="angry">
+              <span class="expr-emoji">&#128544;</span>
+              <span class="expr-label">Raiva</span>
+              <div class="expr-bar-wrap"><div class="expr-bar" id="bar-angry"></div></div>
+              <span class="expr-pct" id="pct-angry">0%</span>
+            </div>
+            <div class="expression-item" data-expr="surprised">
+              <span class="expr-emoji">&#128562;</span>
+              <span class="expr-label">Surpreso</span>
+              <div class="expr-bar-wrap"><div class="expr-bar" id="bar-surprised"></div></div>
+              <span class="expr-pct" id="pct-surprised">0%</span>
+            </div>
+            <div class="expression-item" data-expr="fearful">
+              <span class="expr-emoji">&#128552;</span>
+              <span class="expr-label">Medo</span>
+              <div class="expr-bar-wrap"><div class="expr-bar" id="bar-fearful"></div></div>
+              <span class="expr-pct" id="pct-fearful">0%</span>
+            </div>
+            <div class="expression-item" data-expr="disgusted">
+              <span class="expr-emoji">&#129314;</span>
+              <span class="expr-label">Nojo</span>
+              <div class="expr-bar-wrap"><div class="expr-bar" id="bar-disgusted"></div></div>
+              <span class="expr-pct" id="pct-disgusted">0%</span>
+            </div>
+            <div class="expression-item" data-expr="neutral">
+              <span class="expr-emoji">&#128528;</span>
+              <span class="expr-label">Neutro</span>
+              <div class="expr-bar-wrap"><div class="expr-bar" id="bar-neutral"></div></div>
+              <span class="expr-pct" id="pct-neutral">0%</span>
+            </div>
+          </div>
+          <div class="dominant-expression" id="dominant-expression">
+            <span class="dominant-emoji" id="dominant-emoji">&#127917;</span>
+            <div>
+              <p class="dominant-label">Aguardando deteccao</p>
+              <p class="dominant-sub" id="dominant-sub">Aponte seu rosto para a camera</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <h3 class="panel-title">
+            <span class="panel-title-icon">&#10024;</span>
+            Filtros &amp; Efeitos
+          </h3>
+          <div class="filters-grid" id="filters-grid">
+            <button class="filter-btn active" data-filter="none" id="filter-none">
+              <span class="filter-icon">&#128683;</span>
+              <span>Nenhum</span>
+            </button>
+            <button class="filter-btn" data-filter="landmarks" id="filter-landmarks">
+              <span class="filter-icon">&#128310;</span>
+              <span>Pontos</span>
+            </button>
+            <button class="filter-btn" data-filter="neon" id="filter-neon">
+              <span class="filter-icon">&#127775;</span>
+              <span>Neon</span>
+            </button>
+            <button class="filter-btn" data-filter="sunglasses" id="filter-sunglasses">
+              <span class="filter-icon">&#128526;</span>
+              <span>Oculos</span>
+            </button>
+            <button class="filter-btn" data-filter="dog" id="filter-dog">
+              <span class="filter-icon">&#128054;</span>
+              <span>Cachorro</span>
+            </button>
+            <button class="filter-btn" data-filter="rainbow" id="filter-rainbow">
+              <span class="filter-icon">&#127752;</span>
+              <span>Arco-iris</span>
+            </button>
+            <button class="filter-btn" data-filter="pixelate" id="filter-pixelate">
+              <span class="filter-icon">&#128310;</span>
+              <span>Pixel</span>
+            </button>
+            <button class="filter-btn" data-filter="expression" id="filter-expression">
+              <span class="filter-icon">&#127917;</span>
+              <span>Auto Expr.</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <h3 class="panel-title">
+            <span class="panel-title-icon">&#128202;</span>
+            Estatisticas
+          </h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <span class="stat-value" id="stat-fps">--</span>
+              <span class="stat-label">FPS</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value" id="stat-faces">0</span>
+              <span class="stat-label">Rostos</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value" id="stat-conf">--%</span>
+              <span class="stat-label">Confianca</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value" id="stat-latency">--ms</span>
+              <span class="stat-label">Latencia</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="snapshot-modal" id="snapshot-modal" style="display:none;">
+      <div class="snapshot-inner">
+        <button class="snapshot-close" id="snapshot-close">&#10005;</button>
+        <img id="snapshot-img" alt="Foto capturada" />
+        <div class="snapshot-actions">
+          <a class="btn-primary" id="snapshot-download" download="facevision-snapshot.png">&#8659; Baixar Foto</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
